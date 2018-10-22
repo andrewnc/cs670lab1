@@ -128,7 +128,7 @@ def main():
                         n_agent1 = int(theta1*n_agents)
                         n_agent2 = int(theta2*n_agents)
                         population_progress.append([n_agent1, n_agent2])
-                        population_progress.append([theta1, theta2])
+                        theta_progress.append([theta1, theta2])
 
                         # log, initialize, and shuffle agent space
                         # print("\t{}: {}\n\t{}: {}".format(n_agent1, agent1_name, n_agent2, agent2_name))
@@ -143,6 +143,7 @@ def main():
                             col_name = get_agent_name(col_player)
                             game_obj = Game(row_player, col_player, row_payoff_matrix, col_payoff_matrix)
                             it =0
+                            #play game between two agents
                             while True: 
                                 it += 1
                                 game_obj.step()
@@ -181,7 +182,8 @@ def main():
                         "gamma": gamma,
                         "final_theta1": theta1,
                         "final_theta2": theta2,
-                        "population_progress": population_progress
+                        "population_progress": population_progress,
+                        "theta_progress": theta_progress
                         })
 
 
