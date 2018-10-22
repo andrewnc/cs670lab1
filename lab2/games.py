@@ -167,7 +167,7 @@ def main():
                         prev1, prev2 = theta1, theta2
                         theta1 = theta1 + theta1_prime
                         theta2 = theta2 + theta2_prime
-                        if abs(prev1 - theta1) < 10e-5 and abs(prev2 - theta2) < 10e-5:
+                        if abs(prev1 - theta1) < 10e-6 and abs(prev2 - theta2) < 10e-6:
                             break
 
                        

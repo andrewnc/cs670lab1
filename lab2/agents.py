@@ -37,6 +37,22 @@ class TitforTat():
     def update_previous_move(self, move):
         self.previous_move = move
 
+
+class NotTitforTat():
+    def __init__(self):
+        self.previous_move = None
+    
+    def move(self):
+        if self.previous_move is None:
+            return 1
+        elif self.previous_move == 0:
+            return 1
+        elif self.previous_move == 1:
+            return 0
+
+    def update_previous_move(self, move):
+        self.previous_move = move
+
 class TitforTwoTats():
     def __init__(self):
         self.past_two_moves = deque([0,0], maxlen=2)
