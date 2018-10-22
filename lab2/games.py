@@ -6,7 +6,7 @@ from agents import *
 
 
 class Game():
-    def __init__(self, row_player=None, col_player=None, row_payoff_matrix = [[3, 1], [5, 2]], col_payoff_matrix = [[3, 5], [1, 2]]):
+    def __init__(self, row_player=None, col_player=None, row_payoff_matrix = [[3, 1], [5, 2]], col_payoff_matrix = [[3, 5], [1, 2]], row_name=None, col_name=None):
         """defaults to prisoner's dilemma"""
         self.row_payoff_matrix = row_payoff_matrix
         self.col_payoff_matrix = col_payoff_matrix
@@ -18,6 +18,9 @@ class Game():
         self.col_payoff = []
 
         self.move_history = []
+
+        self.row_name = row_name #currently unused
+        self.col_name = col_name
 
     def step(self):
         row_move = self.row_player.move()
@@ -53,6 +56,19 @@ class Game():
     
     def get_col_payoff(self):
         return np.sum(self.col_payoff)
+
+def get_agent_name(agent_object):
+    t = type(agent_object)
+    if t == AlwaysDefect:
+        return "AlwaysDefect"
+    elif t == AlwaysCoorperate: 
+        return "AlwaysCoorperate"
+    elif t == TitforTat: 
+        return "TitforTat"
+    elif t == NeverForgive: 
+        return "NeverForgive"
+    else:
+        return None
 
 def main():
     agents = [
@@ -100,28 +116,72 @@ def main():
             for gamma in gammas:
                 for theta1, theta2 in initial_population_distribution:
                     payoff = {agent1_name:0, agent2_name: 0}
+                    initial_theta1, initial_theta2 = theta1, theta2
 
-                    # calculate phi for each agent
-                    n_agent1 = int(theta1*n_agents)
-                    n_agent2 = int(theta2*n_agents)
+                    # play through to a steady state
+                    n = 0
+                    population_progress = []
+                    while True:
+                        n += 1
+                         # calculate phi for each agent
+                        n_agent1 = int(theta1*n_agents)
+                        n_agent2 = int(theta2*n_agents)
+                        population_progress.append([n_agent1, n_agent2])
 
-                    # log, initialize, and shuffle agent space
-                    print("{}: {}\n{}: {}".format(n_agent1, agent1_name, n_agent2, agent2_name))
-                    current_agents_generation = [agent1() for x in range(n_agent1)]+[agent2() for x in range(n_agent2)]
-                    np.random.shuffle(current_agents_generation) # occurs in place
+                        # log, initialize, and shuffle agent space
+                        print("\t{}: {}\n\t{}: {}".format(n_agent1, agent1_name, n_agent2, agent2_name))
+                        current_agents_generation = [agent1() for x in range(n_agent1)]+[agent2() for x in range(n_agent2)]
+                        np.random.shuffle(current_agents_generation) # occurs in place
 
-                    # play random pairs, works because of shuffle
-                    for i in range(0, len(current_agents_generation)-2, 2):
-                        row_player = current_agents_generation[i]
-                        col_player = current_agents_generation[i+1]
-                        game_obj = Game(row_player, col_player, row_payoff_matrix, col_payoff_matrix)
-                        while True:
-                            game_obj.step()
-                            if np.random.random() > gamma:
-                                # game is over between two agents
-                                break
-                        payoff[agent1_name] += game_obj.get_row_payoff()
-                        payoff[agent2_name] += game_obj.get_col_payoff()
+                        # play random pairs, works because of shuffle, every agent randomly plays another
+                        for i in range(0, len(current_agents_generation)-2, 2):
+                            row_player = current_agents_generation[i]
+                            col_player = current_agents_generation[i+1]
+                            row_name = get_agent_name(row_player)
+                            col_name = get_agent_name(col_player)
+                            game_obj = Game(row_player, col_player, row_payoff_matrix, col_payoff_matrix)
+                            it =0
+                            while True: 
+                                it += 1
+                                game_obj.step()
+                                if np.random.random() > gamma:
+                                    # game is over between two agents
+                                    break
+                            payoff[row_name] += game_obj.get_row_payoff()
+                            payoff[col_name] += game_obj.get_col_payoff()
+                            payoff[row_name] /= it
+                            payoff[col_name] /= it
+                        
+                        # replicator dynamics for fitness of next generation
+                        payoff[agent1_name] /= n_agent1
+                        payoff[agent2_name] /= n_agent2
+                        total_average_payoff = (payoff[agent1_name] + payoff[agent2_name])/2 # u*
+
+                        # change in population = current_percentage * (average_payoff - total_average_payoff)
+                        theta1_prime = theta1 * (payoff[agent1_name] - total_average_payoff)
+                        theta2_prime = theta2 * (payoff[agent2_name] - total_average_payoff)
+
+                        prev1, prev2 = theta1, theta2
+                        theta1 = theta1 + theta1_prime
+                        theta2 = theta2 + theta2_prime
+                        if abs(prev1 - theta1) < 10e-3 and abs(prev2 - theta2) < 10e-3:
+                            break
+
+                       
+                    # record data here
+                    payoffs.append({
+                        "agent 1": agent1_name,
+                        "agent2": agent2_name,
+                        "initial_theta1": initial_theta1,
+                        "initial_theta2": initial_theta2,
+                        "generations_until_stability": n,
+                        "final_theta1": theta1,
+                        "final_theta2": theta2,
+                        "population_progress": population_progress
+                        })
+
+
+
 
 
 
@@ -142,8 +202,8 @@ def main():
 
     # # plt.plot(np.array(payoffs)[:,0])
     # # plt.show()
-    # df = pd.DataFrame.from_dict(payoffs)
-    # df.to_csv("data.csv", index=False)
+    df = pd.DataFrame.from_dict(payoffs)
+    df.to_csv("data.csv", index=False)
 
 if __name__ == "__main__":
     main()
