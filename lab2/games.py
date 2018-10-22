@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import combinations
 import matplotlib.pyplot as plt
 import pandas as pd
 from agents import *
@@ -55,7 +56,15 @@ def main():
         ["TitforTat", TitforTat],
         ["NeverForgive", NeverForgive]
     ]
+    n_agents = 900
     gammas = [0.95, 0.99]
+    initial_population_distribution = [
+        [0.5, 0.5],
+        [0.25, 0.75],
+        [0.75, 0.25],
+        [0.1, 0.9],
+        [0.9, 0.1]
+    ]
     payoffs = []
 
     prisdel_row_payoff_matrix = [[3, 1], [5, 2]]
@@ -73,26 +82,34 @@ def main():
         ["Battle of the Sexes", battle_row_payoff_matrix, battle_col_payoff_matrix]
     ]
 
-    # build lattice here
+    #replicator dynamics
+    agent_pairs = list(combinations(agents, 2))
 
-    for agent1_name, agent1 in agents:
-        for agent2_name, agent2 in agents:
-            for gamma in gammas:
-                n = 0
-                row_player = agent1()
-                col_player = agent2()
-                game = Game(row_player, col_player)
-                while True:
-                    n += 1
-                    game.step()
-                    if np.random.random() > gamma:
-                        break
-                payoffs.append({"prob": gamma, "agent1": agent1_name, "agent2": agent2_name, "n_plays": n, "agent1_payoff": game.get_row_payoff(), "agent2_payoff": game.get_col_payoff()})
+    print(agent_pairs)
 
-    # plt.plot(np.array(payoffs)[:,0])
-    # plt.show()
-    df = pd.DataFrame.from_dict(payoffs)
-    df.to_csv("data.csv", index=False)
+    for agent1_name, agent1, agent2_name, agent2  in agent_pairs:
+        for theta1, theta2 in initial_population_distribution:
+            pass
+
+
+    # for agent1_name, agent1 in agents:
+    #     for agent2_name, agent2 in agents:
+    #         for gamma in gammas:
+    #             n = 0
+    #             row_player = agent1()
+    #             col_player = agent2()
+    #             game = Game(row_player, col_player)
+    #             while True:
+    #                 n += 1
+    #                 game.step()
+    #                 if np.random.random() > gamma:
+    #                     break
+    #             payoffs.append({"prob": gamma, "agent1": agent1_name, "agent2": agent2_name, "n_plays": n, "agent1_payoff": game.get_row_payoff(), "agent2_payoff": game.get_col_payoff()})
+
+    # # plt.plot(np.array(payoffs)[:,0])
+    # # plt.show()
+    # df = pd.DataFrame.from_dict(payoffs)
+    # df.to_csv("data.csv", index=False)
 
 if __name__ == "__main__":
     main()
