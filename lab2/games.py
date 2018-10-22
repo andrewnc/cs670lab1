@@ -2,6 +2,7 @@ import numpy as np
 from itertools import combinations
 import matplotlib.pyplot as plt
 import pandas as pd
+from tqdm import tqdm
 from agents import *
 
 
@@ -87,7 +88,7 @@ def main():
         [0.9, 0.1]
     ]
 
-    payoffs = []
+    
 
     prisdel_row_payoff_matrix = [[3, 1], [5, 2]]
     prisdel_col_payoff_matrix = [[3, 5], [1, 2]]
@@ -103,11 +104,99 @@ def main():
         ["Stag Hunt", [staghunt_row_payoff_matrix, staghunt_col_payoff_matrix]],
         ["Battle of the Sexes", [battle_row_payoff_matrix, battle_col_payoff_matrix]]
     ]
-
-    #replicator dynamics
+    
     agent_pairs = list(combinations(agents, 2))
 
-    for game_name, game in games:
+    print("replicator dynamics ")
+    payoffs = []
+    #replicator dynamics with random pairings, yes these should be functions, but they're not
+    # for game_name, game in tqdm(games):
+    #     print(game_name)
+    #     row_payoff_matrix = game[0]
+    #     col_payoff_matrix = game[1]
+    #     for (agent1_name, agent1), (agent2_name, agent2)  in agent_pairs:
+    #         print("{} vs {}".format(agent1_name, agent2_name))
+    #         for gamma in gammas:
+    #             for theta1, theta2 in initial_population_distribution:
+    #                 payoff = {agent1_name:0, agent2_name: 0}
+    #                 initial_theta1, initial_theta2 = theta1, theta2
+
+    #                 # play through to a steady state
+    #                 n = 0
+    #                 population_progress = []
+    #                 theta_progress = []
+    #                 while True:
+    #                     n += 1
+    #                      # calculate phi for each agent
+    #                     n_agent1 = int(theta1*n_agents)
+    #                     n_agent2 = int(theta2*n_agents)
+    #                     population_progress.append([n_agent1, n_agent2])
+    #                     theta_progress.append([theta1, theta2])
+
+    #                     # log, initialize, and shuffle agent space
+    #                     # print("\t{}: {}\n\t{}: {}".format(n_agent1, agent1_name, n_agent2, agent2_name))
+    #                     current_agents_generation = [agent1 for x in range(n_agent1)]+[agent2 for x in range(n_agent2)]
+    #                     np.random.shuffle(current_agents_generation) # occurs in place
+
+    #                     # play random pairs, works because of shuffle, every agent randomly plays another
+    #                     for i in range(0, len(current_agents_generation)-2, 2):
+    #                         row_player = current_agents_generation[i]()
+    #                         col_player = current_agents_generation[i+1]()
+    #                         row_name = get_agent_name(row_player)
+    #                         col_name = get_agent_name(col_player)
+    #                         game_obj = Game(row_player, col_player, row_payoff_matrix, col_payoff_matrix)
+    #                         it =0
+    #                         #play game between two agents
+    #                         while True: 
+    #                             it += 1
+    #                             game_obj.step()
+    #                             if np.random.random() > gamma:
+    #                                 # game is over between two agents
+    #                                 break
+    #                         payoff[row_name] += game_obj.get_row_payoff()
+    #                         payoff[col_name] += game_obj.get_col_payoff()
+    #                         payoff[row_name] /= it
+    #                         payoff[col_name] /= it
+                        
+    #                     # replicator dynamics for fitness of next generation
+    #                     payoff[agent1_name] /= n_agent1
+    #                     payoff[agent2_name] /= n_agent2
+    #                     total_average_payoff = (payoff[agent1_name] + payoff[agent2_name])/2 # u*
+
+    #                     # change in population = current_percentage * (average_payoff - total_average_payoff)
+    #                     theta1_prime = theta1 * (payoff[agent1_name] - total_average_payoff)
+    #                     theta2_prime = theta2 * (payoff[agent2_name] - total_average_payoff)
+
+    #                     prev1, prev2 = theta1, theta2
+    #                     theta1 = theta1 + theta1_prime
+    #                     theta2 = theta2 + theta2_prime
+    #                     if abs(prev1 - theta1) < 10e-6 and abs(prev2 - theta2) < 10e-6:
+    #                         break
+
+                       
+    #                 # record data here
+    #                 payoffs.append({
+    #                     "game": game_name,
+    #                     "agent1": agent1_name,
+    #                     "agent2": agent2_name,
+    #                     "initial_theta1": initial_theta1,
+    #                     "initial_theta2": initial_theta2,
+    #                     "generations_until_stability": n,
+    #                     "gamma": gamma,
+    #                     "final_theta1": theta1,
+    #                     "final_theta2": theta2,
+    #                     "population_progress": population_progress,
+    #                     "theta_progress": theta_progress
+    #                     })
+    
+    # df = pd.DataFrame.from_dict(payoffs)
+    # df.to_csv("replicator_data.csv", index=False)
+
+
+    print("imitator dynamics")
+    payoffs = []
+    #imitator dynamics with local lattice, again, not a function
+    for game_name, game in tqdm(games):
         print(game_name)
         row_payoff_matrix = game[0]
         col_payoff_matrix = game[1]
@@ -132,28 +221,31 @@ def main():
 
                         # log, initialize, and shuffle agent space
                         # print("\t{}: {}\n\t{}: {}".format(n_agent1, agent1_name, n_agent2, agent2_name))
-                        current_agents_generation = [agent1() for x in range(n_agent1)]+[agent2() for x in range(n_agent2)]
-                        np.random.shuffle(current_agents_generation) # occurs in place
-
-                        # play random pairs, works because of shuffle, every agent randomly plays another
-                        for i in range(0, len(current_agents_generation)-2, 2):
-                            row_player = current_agents_generation[i]
-                            col_player = current_agents_generation[i+1]
-                            row_name = get_agent_name(row_player)
-                            col_name = get_agent_name(col_player)
-                            game_obj = Game(row_player, col_player, row_payoff_matrix, col_payoff_matrix)
-                            it =0
-                            #play game between two agents
-                            while True: 
-                                it += 1
-                                game_obj.step()
-                                if np.random.random() > gamma:
-                                    # game is over between two agents
-                                    break
-                            payoff[row_name] += game_obj.get_row_payoff()
-                            payoff[col_name] += game_obj.get_col_payoff()
-                            payoff[row_name] /= it
-                            payoff[col_name] /= it
+                        current_agents_generation = [agent1 for x in range(n_agent1)]+[agent2 for x in range(n_agent2)]
+                        np.random.shuffle(current_agents_generation) # occurs in place, good randomization
+                        lattice = np.reshape(current_agents_generation, (-1, 2)) # this is now our lattice
+                        scores = np.zeros_like(current_agents_generation) # used for imitator selection
+                        row_size, col_size = lattice.shape
+                        for row in range(row_size):
+                            for col in range(col_size):
+                                for direction in [[(row-1)%row_size, col],[(row+1)%row_size, col],[row, (col-1)%col_size],[row, (col+1)%col_size],[(row-1)%row_size, (col+1)%col_size],[(row-1)%row_size, (col-1)%col_size],[(row+1)%row_size, (col+1)%col_size],[(row+1)%row_size, (col-1)%col_size]]:
+                                    row_player = lattice[row][col]()
+                                    col_player = lattice[direction[0]][direction[1]]()
+                                    row_name = get_agent_name(row_player)
+                                    col_name = get_agent_name(col_player)
+                                    game_obj = Game(row_player, col_player, row_payoff_matrix, col_payoff_matrix)
+                                    it =0
+                                    #play game between two agents
+                                    while True: 
+                                        it += 1
+                                        game_obj.step()
+                                        if np.random.random() > gamma:
+                                            # game is over between two agents
+                                            break
+                                    payoff[row_name] += game_obj.get_row_payoff()
+                                    payoff[col_name] += game_obj.get_col_payoff()
+                                    payoff[row_name] /= it
+                                    payoff[col_name] /= it
                         
                         # replicator dynamics for fitness of next generation
                         payoff[agent1_name] /= n_agent1
@@ -186,30 +278,8 @@ def main():
                         "theta_progress": theta_progress
                         })
 
-
-
-
-
-
-
-    # for agent1_name, agent1 in agents:
-    #     for agent2_name, agent2 in agents:
-    #         for gamma in gammas:
-    #             n = 0
-    #             row_player = agent1()
-    #             col_player = agent2()
-    #             game = Game(row_player, col_player)
-    #             while True:
-    #                 n += 1
-    #                 game.step()
-    #                 if np.random.random() > gamma:
-    #                     break
-    #             payoffs.append({"prob": gamma, "agent1": agent1_name, "agent2": agent2_name, "n_plays": n, "agent1_payoff": game.get_row_payoff(), "agent2_payoff": game.get_col_payoff()})
-
-    # # plt.plot(np.array(payoffs)[:,0])
-    # # plt.show()
     df = pd.DataFrame.from_dict(payoffs)
-    df.to_csv("data.csv", index=False)
+    df.to_csv("imitator_data.csv", index=False)
 
 if __name__ == "__main__":
     main()
