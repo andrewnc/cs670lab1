@@ -65,8 +65,8 @@ def get_agent_name(agent_object):
         return "AlwaysCoorperate"
     elif t == TitforTat: 
         return "TitforTat"
-    elif t == NeverForgive: 
-        return "NeverForgive"
+    elif t == NotTitforTat: 
+        return "NotTitforTat"
     else:
         return None
 
@@ -75,7 +75,7 @@ def main():
         ["AlwaysDefect", AlwaysDefect],
         ["AlwaysCoorperate", AlwaysCoorperate],
         ["TitforTat", TitforTat],
-        ["NeverForgive", NeverForgive]
+        ["NotTitforTat", NotTitforTat]
     ]
     n_agents = 900
     gammas = [0.95, 0.99]
@@ -121,15 +121,17 @@ def main():
                     # play through to a steady state
                     n = 0
                     population_progress = []
+                    theta_progress = []
                     while True:
                         n += 1
                          # calculate phi for each agent
                         n_agent1 = int(theta1*n_agents)
                         n_agent2 = int(theta2*n_agents)
                         population_progress.append([n_agent1, n_agent2])
+                        population_progress.append([theta1, theta2])
 
                         # log, initialize, and shuffle agent space
-                        print("\t{}: {}\n\t{}: {}".format(n_agent1, agent1_name, n_agent2, agent2_name))
+                        # print("\t{}: {}\n\t{}: {}".format(n_agent1, agent1_name, n_agent2, agent2_name))
                         current_agents_generation = [agent1() for x in range(n_agent1)]+[agent2() for x in range(n_agent2)]
                         np.random.shuffle(current_agents_generation) # occurs in place
 
@@ -164,17 +166,19 @@ def main():
                         prev1, prev2 = theta1, theta2
                         theta1 = theta1 + theta1_prime
                         theta2 = theta2 + theta2_prime
-                        if abs(prev1 - theta1) < 10e-3 and abs(prev2 - theta2) < 10e-3:
+                        if abs(prev1 - theta1) < 10e-5 and abs(prev2 - theta2) < 10e-5:
                             break
 
                        
                     # record data here
                     payoffs.append({
-                        "agent 1": agent1_name,
+                        "game": game_name,
+                        "agent1": agent1_name,
                         "agent2": agent2_name,
                         "initial_theta1": initial_theta1,
                         "initial_theta2": initial_theta2,
                         "generations_until_stability": n,
+                        "gamma": gamma,
                         "final_theta1": theta1,
                         "final_theta2": theta2,
                         "population_progress": population_progress
