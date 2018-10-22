@@ -3,6 +3,7 @@ from itertools import combinations
 import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
+from math import ceil
 from agents import *
 
 
@@ -110,7 +111,7 @@ def main():
     print("replicator dynamics ")
     payoffs = []
     #replicator dynamics with random pairings, yes these should be functions, but they're not
-    # for game_name, game in tqdm(games):
+    # for game_name, game in games:
     #     print(game_name)
     #     row_payoff_matrix = game[0]
     #     col_payoff_matrix = game[1]
@@ -196,7 +197,7 @@ def main():
     print("imitator dynamics")
     payoffs = []
     #imitator dynamics with local lattice, again, not a function
-    for game_name, game in tqdm(games):
+    for game_name, game in games:
         print(game_name)
         row_payoff_matrix = game[0]
         col_payoff_matrix = game[1]
@@ -214,14 +215,21 @@ def main():
                     while True:
                         n += 1
                          # calculate phi for each agent
-                        n_agent1 = int(theta1*n_agents)
-                        n_agent2 = int(theta2*n_agents)
+                        n_agent1 = ceil(theta1*n_agents)
+                        n_agent2 = ceil(theta2*n_agents)
+                        normalizing_difference = n_agents - (n_agent1 + n_agent2)
+
+                        if np.random.random() > 0.5:
+                            n_agent1 += normalizing_difference
+                        else:
+                            n_agent2 += normalizing_difference
+
                         population_progress.append([n_agent1, n_agent2])
                         theta_progress.append([theta1, theta2])
 
                         # log, initialize, and shuffle agent space
                         # print("\t{}: {}\n\t{}: {}".format(n_agent1, agent1_name, n_agent2, agent2_name))
-                        current_agents_generation = [agent1 for x in range(n_agent1)]+[agent2 for x in range(n_agent2)]
+                        current_agents_generation = np.array([agent1 for x in range(n_agent1)]+[agent2 for x in range(n_agent2)])
                         np.random.shuffle(current_agents_generation) # occurs in place, good randomization
                         lattice = np.reshape(current_agents_generation, (-1, 2)) # this is now our lattice
                         scores = np.zeros_like(current_agents_generation) # used for imitator selection
