@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
 from math import ceil
+from collections import Counter
 from agents import *
 
 
@@ -196,6 +197,7 @@ def main():
 
     print("imitator dynamics")
     payoffs = []
+    cardinal_directions = lambda row, col, row_size, col_size: [[(row-1)%row_size, col],[(row+1)%row_size, col],[row, (col-1)%col_size],[row, (col+1)%col_size],[(row-1)%row_size, (col+1)%col_size],[(row-1)%row_size, (col-1)%col_size],[(row+1)%row_size, (col+1)%col_size],[(row+1)%row_size, (col-1)%col_size]]
     #imitator dynamics with local lattice, again, not a function
     for game_name, game in games:
         print(game_name)
@@ -209,40 +211,40 @@ def main():
                     initial_theta1, initial_theta2 = theta1, theta2
 
                     # play through to a steady state
-                    n = 0
                     population_progress = []
                     theta_progress = []
+
+                    # calculate phi for each agent
+                    n_agent1 = ceil(theta1*n_agents)
+                    n_agent2 = ceil(theta2*n_agents)
+                    normalizing_difference = n_agents - (n_agent1 + n_agent2)
+
+                    if np.random.random() > 0.5:
+                        n_agent1 += normalizing_difference
+                    else:
+                        n_agent2 += normalizing_difference
+
+                    # log, initialize, and shuffle agent space
+                    # print("\t{}: {}\n\t{}: {}".format(n_agent1, agent1_name, n_agent2, agent2_name))
+                    current_agents_generation = np.array([agent1 for x in range(n_agent1)]+[agent2 for x in range(n_agent2)])
+                    np.random.shuffle(current_agents_generation) # occurs in place, good randomization
+                    lattice = np.reshape(current_agents_generation, (30,30)) # this is now our lattice
+                    n = 0
                     while True:
                         n += 1
-                         # calculate phi for each agent
-                        n_agent1 = ceil(theta1*n_agents)
-                        n_agent2 = ceil(theta2*n_agents)
-                        normalizing_difference = n_agents - (n_agent1 + n_agent2)
-
-                        if np.random.random() > 0.5:
-                            n_agent1 += normalizing_difference
-                        else:
-                            n_agent2 += normalizing_difference
-
-                        population_progress.append([n_agent1, n_agent2])
-                        theta_progress.append([theta1, theta2])
-
-                        # log, initialize, and shuffle agent space
-                        # print("\t{}: {}\n\t{}: {}".format(n_agent1, agent1_name, n_agent2, agent2_name))
-                        current_agents_generation = np.array([agent1 for x in range(n_agent1)]+[agent2 for x in range(n_agent2)])
-                        np.random.shuffle(current_agents_generation) # occurs in place, good randomization
-                        lattice = np.reshape(current_agents_generation, (-1, 2)) # this is now our lattice
-                        scores = np.zeros_like(current_agents_generation) # used for imitator selection
+                        scores = np.zeros_like(lattice) # used for imitator selection
                         row_size, col_size = lattice.shape
                         for row in range(row_size):
                             for col in range(col_size):
-                                for direction in [[(row-1)%row_size, col],[(row+1)%row_size, col],[row, (col-1)%col_size],[row, (col+1)%col_size],[(row-1)%row_size, (col+1)%col_size],[(row-1)%row_size, (col-1)%col_size],[(row+1)%row_size, (col+1)%col_size],[(row+1)%row_size, (col-1)%col_size]]:
+                                curr_payoff = 0
+                                for direction in cardinal_directions(row, col, row_size, col_size):
                                     row_player = lattice[row][col]()
                                     col_player = lattice[direction[0]][direction[1]]()
                                     row_name = get_agent_name(row_player)
                                     col_name = get_agent_name(col_player)
                                     game_obj = Game(row_player, col_player, row_payoff_matrix, col_payoff_matrix)
-                                    it =0
+
+                                    it = 0
                                     #play game between two agents
                                     while True: 
                                         it += 1
@@ -250,25 +252,46 @@ def main():
                                         if np.random.random() > gamma:
                                             # game is over between two agents
                                             break
-                                    payoff[row_name] += game_obj.get_row_payoff()
-                                    payoff[col_name] += game_obj.get_col_payoff()
-                                    payoff[row_name] /= it
-                                    payoff[col_name] /= it
-                        
-                        # replicator dynamics for fitness of next generation
-                        payoff[agent1_name] /= n_agent1
-                        payoff[agent2_name] /= n_agent2
-                        total_average_payoff = (payoff[agent1_name] + payoff[agent2_name])/2 # u*
+                                    curr_payoff += game_obj.get_row_payoff()
+                                    curr_payoff /= it
+                                scores[row][col] = curr_payoff
 
-                        # change in population = current_percentage * (average_payoff - total_average_payoff)
-                        theta1_prime = theta1 * (payoff[agent1_name] - total_average_payoff)
-                        theta2_prime = theta2 * (payoff[agent2_name] - total_average_payoff)
+                        # imitator dynamics for fitness of next generation
+                        new_lattice = lattice.copy()
+                        for row in range(row_size):
+                            for col in range(col_size):
+                                fitest_neighbor = np.argmax([scores[row][col],
+                                    scores[(row-1)%row_size][col],
+                                    scores[(row+1)%row_size][col],
+                                    scores[row][(col-1)%col_size],
+                                    scores[row][(col+1)%col_size],
+                                    scores[(row-1)%row_size][(col+1)%col_size],
+                                    scores[(row-1)%row_size][(col-1)%col_size],
+                                    scores[(row+1)%row_size][(col+1)%col_size],
+                                    scores[(row+1)%row_size][(col-1)%col_size]])
+
+                                direction = [[row,col]]+cardinal_directions(row, col, row_size, col_size)
+                                direction = direction[fitest_neighbor]
+                                
+                                new_lattice[row][col] = lattice[direction[0]][direction[1]]
+
+                        lattice = new_lattice.copy()
+
+                        c = Counter(np.reshape(lattice, (-1)))
+                        n_agent1 = c[agent1]
+                        n_agent2 = c[agent2]
+
 
                         prev1, prev2 = theta1, theta2
-                        theta1 = theta1 + theta1_prime
-                        theta2 = theta2 + theta2_prime
+
+                        theta1 = n_agent1/(n_agent1 + n_agent2)
+                        theta2 = n_agent2/(n_agent1 + n_agent2)    
+                        
                         if abs(prev1 - theta1) < 10e-6 and abs(prev2 - theta2) < 10e-6:
                             break
+
+                        population_progress.append([n_agent1, n_agent2])
+                        theta_progress.append([theta1, theta2])
 
                        
                     # record data here
