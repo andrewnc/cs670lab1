@@ -1,112 +1,14 @@
 import numpy as np
-from collections import deque
 import matplotlib.pyplot as plt
 import pandas as pd
+from agents import *
 
-class AlwaysDefect():
-    def __init__(self):
-        pass
-    
-    def move(self):
-        return 1
-
-class AlwaysCoorperate():
-    def __init__(self):
-        pass
-    
-    def move(self):
-        return 0
-
-class RandomAgent():
-    def __init__(self):
-        pass
-
-    def move(self):
-        return np.random.choice([0,1])
-
-class TitforTat():
-    def __init__(self):
-        self.previous_move = None
-    
-    def move(self):
-        if self.previous_move is None:
-            return 0
-        elif self.previous_move == 0:
-            return 0
-        elif self.previous_move == 1:
-            return 1
-
-    def update_previous_move(self, move):
-        self.previous_move = move
-
-class TitforTwoTats():
-    def __init__(self):
-        self.past_two_moves = deque([0,0], maxlen=2)
-    
-    def move(self):
-        if np.sum(self.past_two_moves) == 2:
-            return 1
-        else:
-            return 0
-
-    def update_previous_move(self, move):
-        self.past_two_moves.append(move)
-
-class PavlovAgent():
-    def __init__(self):
-        self.agreed = True
-    
-    def move(self):
-        if self.agreed:
-            return 0
-        else:
-            return 1
-
-    def update_previous_move(self, move1, move2):
-        if move1 == move2:
-            self.agreed = True
-        else:
-            self.agreed = False
-    
-class WinStayLoseShift():
-    def __init__(self):
-        self.move_to_play = 0
-
-    def move(self):
-        return self.move_to_play
-
-    def update_previous_move(self, move):
-        if move == 1:
-            self.move_to_play = 1 - self.move_to_play
-        else:
-            self.move_to_play = self.move_to_play
-
-class NeverForgive():
-    def __init__(self):
-        self.angry = False
-
-    def move(self):
-        if self.angry:
-            return 1
-        else:
-            return 0
-
-    def update_previous_move(self, move):
-        if move:
-            self.angry = True
-
-class MyAgent():
-    def __init__(self):
-        self.next_move = 0
-    
-    def move(self):
-        self.next_move = 1 - self.next_move
-        return self.next_move
 
 class Game():
-    def __init__(self, row_player, col_player):
-        self.row_payoff_matrix = [[3, 1], [5, 2]]
-        self.col_payoff_matrix = [[3, 5], [1, 2]]
+    def __init__(self, row_player, col_player, row_payoff_matrix = [[3, 1], [5, 2]], col_payoff_matrix = [[3, 5], [1, 2]]):
+        """defaults to prisoner's dilemma"""
+        self.row_payoff_matrix = row_payoff_matrix
+        self.col_payoff_matrix = col_payoff_matrix
 
         self.row_player = row_player
         self.col_player = col_player
@@ -146,35 +48,36 @@ class Game():
     def get_col_payoff(self):
         return np.sum(self.col_payoff)
 
-
 def main():
-    agents = [["AlwaysDefect", AlwaysDefect], ["RandomAgent", RandomAgent], ["AlwaysCoorperate", AlwaysCoorperate], ["TitforTat", TitforTat], ["TitforTwoTats", TitforTwoTats], ["PavlovAgent", PavlovAgent], ["WinStayLoseShift", WinStayLoseShift], ["NeverForgive", NeverForgive], ["MyAgent", MyAgent]]
-    n_values = [5, 100, 200]
+    agents = [
+        ["AlwaysDefect", AlwaysDefect],
+        ["AlwaysCoorperate", AlwaysCoorperate],
+        ["TitforTat", TitforTat],
+        ["NeverForgive", NeverForgive]
+    ]
+    gammas = [0.95, 0.99]
     payoffs = []
+
+    prisdel_row_payoff_matrix = [[3, 1], [5, 2]]
+    prisdel_col_payoff_matrix = [[3, 5], [1, 2]]
+
+    staghunt_row_payoff_matrix = [[4, 0], [2, 2]]
+    staghunt_col_payoff_matrix = [[4, 2], [0, 2]]
+
+    battle_row_payoff_matrix = [[0, 1], [2, 0]]
+    battle_col_payoff_matrix = [[0, 2], [1, 0]]
+
+    games = [
+        ["Prisoner's Dilemma", prisdel_row_payoff_matrix, prisdel_col_payoff_matrix],
+        ["Stag Hunt", staghunt_row_payoff_matrix, staghunt_col_payoff_matrix],
+        ["Battle of the Sexes", battle_row_payoff_matrix, battle_col_payoff_matrix]
+    ]
+
+    # build lattice here
+
     for agent1_name, agent1 in agents:
         for agent2_name, agent2 in agents:
-            for n in n_values:
-                row_player = agent1()
-                col_player = agent2()
-                game = Game(row_player, col_player)
-                for i in range(n):
-                    game.step()
-                payoffs.append({"agent1": agent1_name, "agent2": agent2_name, "n_plays": n, "agent1_payoff": game.get_row_payoff(), "agent2_payoff": game.get_col_payoff()})
-    # plt.plot(np.array(payoffs)[:,0])
-    # plt.show()
-    df = pd.DataFrame.from_dict(payoffs)
-    with open("results.html", 'w') as f:
-        f.write(df.to_html())
-
-    df.to_csv("data.csv", index=False)
-
-def main_prob():
-    agents = [["AlwaysDefect", AlwaysDefect], ["RandomAgent", RandomAgent], ["AlwaysCoorperate", AlwaysCoorperate], ["TitforTat", TitforTat], ["TitforTwoTats", TitforTwoTats], ["PavlovAgent", PavlovAgent], ["WinStayLoseShift", WinStayLoseShift], ["NeverForgive", NeverForgive], ["MyAgent", MyAgent]]
-    probs = [0.75, 0.9, 0.99]
-    payoffs = []
-    for agent1_name, agent1 in agents:
-        for agent2_name, agent2 in agents:
-            for p in probs:
+            for gamma in gammas:
                 n = 0
                 row_player = agent1()
                 col_player = agent2()
@@ -182,17 +85,14 @@ def main_prob():
                 while True:
                     n += 1
                     game.step()
-                    if np.random.random() > p:
+                    if np.random.random() > gamma:
                         break
-                payoffs.append({"prob": p, "agent1": agent1_name, "agent2": agent2_name, "n_plays": n, "agent1_payoff": game.get_row_payoff(), "agent2_payoff": game.get_col_payoff()})
+                payoffs.append({"prob": gamma, "agent1": agent1_name, "agent2": agent2_name, "n_plays": n, "agent1_payoff": game.get_row_payoff(), "agent2_payoff": game.get_col_payoff()})
 
     # plt.plot(np.array(payoffs)[:,0])
     # plt.show()
     df = pd.DataFrame.from_dict(payoffs)
-    with open("prob_results.html", 'w') as f:
-        f.write(df.to_html())
-
-    df.to_csv("prob_data.csv", index=False)
+    df.to_csv("data.csv", index=False)
 
 if __name__ == "__main__":
-    main_prob()
+    main()
