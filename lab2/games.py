@@ -344,10 +344,8 @@ def main():
     print("imitator dynamics")
     imitator_threads = [threading.Thread(target=imthread, args=(game_name, game)) for game_name, game in games]
 
-    imitator_threads[1].start()
-    imitator_threads[1].join()
-    # [t.start() for t in imitator_threads]
-    # [t.join() for t in imitator_threads]
+    [t.start() for t in imitator_threads]
+    [t.join() for t in imitator_threads]
 
 
     df = pd.DataFrame.from_dict(payoffs)
