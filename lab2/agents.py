@@ -8,12 +8,19 @@ class AlwaysDefect():
     def move(self):
         return 1
 
+    def update_previous_move(self, *args):
+        pass
+
+
 class AlwaysCoorperate():
     def __init__(self):
         pass
     
     def move(self):
         return 0
+
+    def update_previous_move(self, *args):
+        pass
 
 class RandomAgent():
     def __init__(self):
@@ -22,6 +29,9 @@ class RandomAgent():
     def move(self):
         return np.random.choice([0,1])
 
+    def update_previous_move(self, *args):
+        pass
+
 class TitforTat():
     def __init__(self):
         self.previous_move = None
@@ -29,10 +39,7 @@ class TitforTat():
     def move(self):
         if self.previous_move is None:
             return 0
-        elif self.previous_move == 0:
-            return 0
-        elif self.previous_move == 1:
-            return 1
+        return self.previous_move
 
     def update_previous_move(self, move):
         self.previous_move = move
@@ -45,10 +52,7 @@ class NotTitforTat():
     def move(self):
         if self.previous_move is None:
             return 1
-        elif self.previous_move == 0:
-            return 1
-        elif self.previous_move == 1:
-            return 0
+        return 1 - self.previous_move
 
     def update_previous_move(self, move):
         self.previous_move = move
@@ -116,3 +120,6 @@ class MyAgent():
     def move(self):
         self.next_move = 1 - self.next_move
         return self.next_move
+    
+    def update_previous_move(self, *args):
+        pass
