@@ -83,8 +83,8 @@ def main():
     ]
     n_agents = 900
     gammas = [0.95, 0.99]
-    lr = 0.001
-    n_steps = 100
+    lr = 0.5
+    n_steps = 10
     initial_population_distribution = [
         [0.25, 0.25, 0.25, 0.25],
         [0.40, 0.40, 0.10, 0.10],
@@ -143,7 +143,6 @@ def main():
 
                     # log, initialize, and shuffle agent space
                     current_agents_generation = [agent1 for x in range(n_agent1)]+[agent2 for x in range(n_agent2)]+[agent3 for x in range(n_agent3)]+[agent4 for x in range(n_agent4)]
-                    # print(current_agents_generation)
                     np.random.shuffle(current_agents_generation) # occurs in place
 
                     # play random pairs, works because of shuffle, every agent randomly plays another
@@ -163,7 +162,7 @@ def main():
                                 break
                         payoff[row_name] += game_obj.get_row_payoff()
                         # payoff[col_name] += game_obj.get_col_payoff()
-                        payoff[row_name] /= it
+                        # payoff[row_name] /= it
                         # payoff[col_name] /= it
                     
                     # replicator dynamics for fitness of next generation
