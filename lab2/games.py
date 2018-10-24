@@ -305,15 +305,12 @@ def main():
                         n_agent4 = c[agent4]
 
 
-
-                        prev1, prev2, prev3, prev4 = theta1, theta2, theta3, theta4
-
                         theta1 = n_agent1/(n_agent1 + n_agent2 + n_agent3 + n_agent4)
                         theta2 = n_agent2/(n_agent1 + n_agent2 + n_agent3 + n_agent4)
                         theta3 = n_agent3/(n_agent1 + n_agent2 + n_agent3 + n_agent4)
                         theta4 = n_agent4/(n_agent1 + n_agent2 + n_agent3 + n_agent4)
 
-                        if abs(prev1 - theta1) < 10e-8 and abs(prev2 - theta2) < 10e-8 and abs(prev3 - theta3) < 10e-8 and abs(prev4 - theta4) < 10e-8 and n >= 8:
+                        if n >= 15:
                             break
 
                         theta_progress.append([theta1, theta2, theta3, theta4])
